@@ -160,11 +160,26 @@ void plaintextToBinary(char plaintext[],int *binary,int size)
 		}
 	}
 }
+void binaryToText(int binary[],int Outstring[],int size)
+{
+	int ch=0;
+	for(int i=0;i<size;i++)
+	{
+		for(int j=0;j<8;j++)
+		{
+			ch = ch*10;
+			ch = ch + binary[i*8+j];
+		}
+		Outstring[i]=ch;
+	}
+
+
+}
 void printArray(int array[],int size)
 {
 	for(int i=0;i<size;i++)
 	{
-		printf("%d ",array[i]);
+		printf("%c ",array[i]);
 	}
 	printf("\n");
 }
@@ -405,23 +420,21 @@ void main()
 	//strncpy (str2,keystring,8);
 	int size,size2;
 	size2 = strlen(keystring);
-	
-	
-	
 	size = strlen(plaintext);
 	int sizewithpadd = size + (8-(size%8));
 	int sizewithpadd2 = size2 + (8-(size2%8));
+	int outstring[sizewithpadd];
 	//printf("%d\n",size2);
 	int binary[sizewithpadd*8];
 	int binaryout[sizewithpadd*8];
 	int key64[sizewithpadd2*8];
 	plaintextToBinary(plaintext,binary,size);
-	printArray(binary,sizewithpadd*8);
-	plaintextToBinary(keystring,key64,sizewithpadd2);
-	
+	//printArray(binary,sizewithpadd*8);
+	plaintextToBinary(keystring,key64,sizewithpadd2);	
 	keySchedule(key64);
 	Encrypt(binary,binaryout,sizewithpadd);
-	printArray(binaryout,sizewithpadd*8);
+	binaryToText(binaryout,outstring,sizewithpadd);
+	printArray(outstring,sizewithpadd);
 
 }
 
