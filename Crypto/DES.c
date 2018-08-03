@@ -1,8 +1,7 @@
 #include<stdio.h>
 #include<string.h>
 
-const int IPMatrix[64] = 
-{
+const int IPMatrix[64] = {
 	    58, 50, 42, 34, 26, 18, 10,  2,
 	    60, 52, 44, 36, 28, 20, 12,  4,
 	    62, 54, 46, 38, 30, 22, 14,  6,
@@ -125,6 +124,7 @@ const int PboxMatrix[32] = {
 int IPtext[64],ExpText[48],XorText[48],X2[32],R[32],Encrypted[64];
 int LEFT[17][32],RIGHT[17][32];
 int Key48[16][48];
+int e=0;
 
 
 
@@ -133,7 +133,7 @@ void plaintextToBinary(char plaintext[],int *binary,int size)
 	int i,j=0,k=0;
 	char ch;
 	int padd ;
-	padd= size%8;
+	padd= (8- size%8);
 	for(i=0;i<size;i++)
 	{
 		j=0;
@@ -166,15 +166,17 @@ void printArray(int array[],int size)
 	{
 		printf("%d ",array[i]);
 	}
-	printf("");
+	printf("\n");
 }
 void InitialPermute(int binary[],int i)
 {
+	
 	int j;
 		for(j=0;j<64;j++)
 		{
 			IPtext[j]=binary[i+IPMatrix[j]-1];
 		}
+		//printf("I am at leas her");
 }
 void expand(int round)
 {
@@ -182,6 +184,8 @@ void expand(int round)
 	for(i=0;i<48;i++)
 	{
 		ExpText[i]=RIGHT[round-1][ExpansionMatrix[i]-1];
+		//printf("I am at expand : %d    %d   %d  times \n",RIGHT[round-1][i],i,round-1);
+		
 	}
 }
 void xor(int round )
@@ -199,13 +203,19 @@ void sBox(int round)
 	int k=0,m=0;
 	for(int i=0;i<8;i++)
 	{
+		
+		
 		for(int j=0;j<6;j++)
 		{
 			x[i][j] = XorText[k++];
+			
 		}
+		
 		row =x[i][0]*2+x[i][5];
-		column = 8*x[0][1]+ 4*x[0][2]+ 2*x[0][3]+ 1*x[0][4];
+		column = 8*x[i][1]+ 4*x[i][2]+ 2*x[i][3]+ 1*x[i][4];
+		
 		hex = SboxMatrix[i][row][column];
+		
 		for(int l=0;l<4;l++)
 		{
 			
@@ -216,6 +226,7 @@ void sBox(int round)
 		}
 		
 	}
+	
 }
 void pBox(int round)
 {
@@ -227,6 +238,7 @@ void pBox(int round)
 }
 void f(int round)
 {
+	
 	expand(round);
 	xor(round); 
 	sBox(round);
@@ -236,11 +248,13 @@ void f(int round)
 }
 void doRounds(int round)
 {
+	
 	f(round);
 	for(int i=0;i<32;i++)
 	{
 		RIGHT[round][i]=R[i]^LEFT[round-1][i];
 		LEFT[round][i]=RIGHT[round-1][i];
+
 	}
 	
 }
@@ -249,15 +263,8 @@ void FinalPermute(int binary[],int binaryout[],int i)
 	int j;
 	for(j=0;j<64;j++)
 	{
-		if(FPMatrix[j]<32)
-		{
-			binaryout[j]=LEFT[16][FPMatrix[j]-1];
-		}
-		else
-		{
-			binaryout[j]=RIGHT[16][FPMatrix[j]-33];
-		}
-		
+		binaryout[i+j]=Encrypted[FPMatrix[j]-1];
+		//printf("I am at FinalPermute : %d    %d   times \n",Encrypted[j],j);		
 	}
 }
 void  Encrypt(int binary[],int binaryout[],int sizewithpadd)
@@ -266,6 +273,8 @@ void  Encrypt(int binary[],int binaryout[],int sizewithpadd)
 	for(i=0;i<sizewithpadd*8;i=i+64)
 	{
 		InitialPermute(binary,i);
+				
+
 		for(j=0;j<64;j++)
 		{
 			if(j<32)
@@ -276,13 +285,29 @@ void  Encrypt(int binary[],int binaryout[],int sizewithpadd)
 			{
 				RIGHT[0][j-32]=IPtext[j];
 			}
+			
 		}
 		for(k=1;k<=16;k++)
 		{
+			
 			doRounds(k);
+			
 		}
-		FinalPermute(binary,binaryout,i);
+		for(j=0;j<64;j++)
+		{
+			if(j<32)
+			{
+				Encrypted[j]=RIGHT[16][j];
+			}
+			else
+			{
+				Encrypted[j]=LEFT[16][j-32];
+			}
+			
+			
+		}
 		
+		FinalPermute(binary,binaryout,i);
 		
 		
 	}
@@ -308,7 +333,7 @@ void left_shift(int a[16][28])
 			temp=a[i][0];
 			for(k=0;k<27;k++)
 			{
-				a[i][j]=a[i][j+1];
+				a[i][k]=a[i][k+1];
 			}
 			a[i][27]=temp;
 		}
@@ -381,28 +406,22 @@ void main()
 	int size,size2;
 	size2 = strlen(keystring);
 	
-	//printf("%s",plaintext);
+	
 	
 	size = strlen(plaintext);
-	int sizewithpadd = size + (size%8);
-	int sizewithpadd2 = size2 + (size2%8);
-	
+	int sizewithpadd = size + (8-(size%8));
+	int sizewithpadd2 = size2 + (8-(size2%8));
+	//printf("%d\n",size2);
 	int binary[sizewithpadd*8];
 	int binaryout[sizewithpadd*8];
-	int key64[64];
+	int key64[sizewithpadd2*8];
 	plaintextToBinary(plaintext,binary,size);
 	printArray(binary,sizewithpadd*8);
-	plaintextToBinary(keystring,key64,sizewithpadd2*8);
+	plaintextToBinary(keystring,key64,sizewithpadd2);
 	
 	keySchedule(key64);
 	Encrypt(binary,binaryout,sizewithpadd);
 	printArray(binaryout,sizewithpadd*8);
-	
-	
-	
-	
-	
-
 
 }
 
