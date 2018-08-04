@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
-
+//initial Permutation Matrix
 const int IPMatrix[64] = {
 	    58, 50, 42, 34, 26, 18, 10,  2,
 	    60, 52, 44, 36, 28, 20, 12,  4,
@@ -12,7 +12,7 @@ const int IPMatrix[64] = {
 	    61, 53, 45, 37, 29, 21, 13,  5,
 	    63, 55, 47, 39, 31, 23, 15,  7
 };
-
+// Final Permutation matrix
 const int FPMatrix[64] = {
     40,  8, 48, 16, 56, 24, 64, 32,
     39,  7, 47, 15, 55, 23, 63, 31,
@@ -23,7 +23,7 @@ const int FPMatrix[64] = {
     34,  2, 42, 10, 50, 18, 58, 26,
     33,  1, 41,  9, 49, 17, 57, 25
 };
-
+//PC1Matrix
 const int PC1Matrix[56] = {
    57, 49, 41, 33, 25, 17,  9,
     1, 58, 50, 42, 34, 26, 18,
@@ -34,11 +34,11 @@ const int PC1Matrix[56] = {
    14,  6, 61, 53, 45, 37, 29,
    21, 13,  5, 28, 20, 12,  4
 };
-
+//Left shift Orders
 const int RotationsMatrix[16] = {
     1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1
 };
-
+//PC2 Matrix
 const int PC2Matrix[48] = {
    14, 17, 11, 24,  1,  5,
     3, 28, 15,  6, 21, 10,
@@ -49,7 +49,7 @@ const int PC2Matrix[48] = {
    44, 49, 39, 56, 34, 53,
    46, 42, 50, 36, 29, 32
 };
-
+//Look Up Table For Expansion Algo
 const int ExpansionMatrix[48] = {
     32,  1,  2,  3,  4,  5,  4,  5,
      6,  7,  8,  9,  8,  9, 10, 11,
@@ -58,6 +58,7 @@ const int ExpansionMatrix[48] = {
     22, 23, 24, 25, 24, 25, 26, 27,
     28, 29, 28, 29, 30, 31, 32,  1
 };
+//8 Sbox Tables
 const int SboxMatrix[8][4][16] = {
    {
    {14,  4, 13,  1,  2, 15, 11,  8,  3, 10,  6, 12,  5,  9,  0,  7},
@@ -115,19 +116,21 @@ const int SboxMatrix[8][4][16] = {
    { 2,  1, 14,  7,  4, 10,  8, 13, 15, 12,  9,  0,  3,  5,  6, 11},
    },
 };
-
+//PBox Matrixes
 const int PboxMatrix[32] = {
     16,  7, 20, 21, 29, 12, 28, 17,
      1, 15, 23, 26,  5, 18, 31, 10,
      2,  8, 24, 14, 32, 27,  3,  9,
     19, 13, 30,  6, 22, 11,  4, 25
 };
+//Global Variable initialization
 int IPtext[64],ExpText[48],XorText[48],X2[32],R[32],Encrypted[64];
 int LEFT[17][32],RIGHT[17][32];
 int Key48[16][48];
 int mode;
 void plaintextToBinary(char plaintext[],int binary[],int size)
 {
+	//this function converts text to binary  
 	int i,j=0,k=0;
 	int ch;
 	int padd =0;
@@ -169,6 +172,7 @@ void plaintextToBinary(char plaintext[],int binary[],int size)
 }
 void binaryToText(int binary[],char Outstring[],int size)
 {
+	//this function converts binary to text
 	int ch=0;
 	for(int i=0;i<size;i++)
 	{
@@ -184,6 +188,7 @@ void binaryToText(int binary[],char Outstring[],int size)
 }
 void printArray(int array[],int size)
 {
+	// for printing binarry array
 	for(int i=0;i<size;i++)
 	{
 		printf("%d",array[i]);
@@ -192,6 +197,7 @@ void printArray(int array[],int size)
 }
 void printArray2(char array[],int size)
 {
+	//for printing charecter array
 	for(int i=0;i<size;i++)
 	{
 		printf("%c",array[i]);
@@ -200,26 +206,27 @@ void printArray2(char array[],int size)
 }
 void InitialPermute(int binary[],int i)
 {
-	
+	//initial permutation function 
 	int j;
 		for(j=0;j<64;j++)
 		{
 			IPtext[j]=binary[i+IPMatrix[j]-1];
 		}
-		//printf("I am at leas her");
 }
 void expand(int round)
 {
+	//expansion form 32 bit to 48 bit using lookup Table
 	int i;
 	for(i=0;i<48;i++)
 	{
 		ExpText[i]=RIGHT[round-1][ExpansionMatrix[i]-1];
-		//printf("I am at expand : %d    %d   %d  times \n",RIGHT[round-1][i],i,round-1);
+		
 		
 	}
 }
 void xor(int round,int decrypt )
 {
+	//for xoring with the key when decrypt ==1 then it does xor  with reverse or der of key
 	int i;
 	for(i=0;i<48;i++)
 	{
@@ -238,6 +245,7 @@ void xor(int round,int decrypt )
 }
 void sBox(int round)
 {
+	//s box look up table consult function
 	int row,column,hex;
 	int x[8][6];
 	int k=0,m=0;
@@ -251,8 +259,8 @@ void sBox(int round)
 			
 		}
 		
-		row =x[i][0]*2+x[i][5];
-		column = 8*x[i][1]+ 4*x[i][2]+ 2*x[i][3]+ 1*x[i][4];
+		row =x[i][0]*2+x[i][5]; //row = [x0][x5]
+		column = 8*x[i][1]+ 4*x[i][2]+ 2*x[i][3]+ 1*x[i][4];//column = x1x2x3x4x5
 		
 		hex = SboxMatrix[i][row][column];
 		
@@ -270,6 +278,7 @@ void sBox(int round)
 }
 void pBox(int round)
 {
+	//pbox matrix lookup
 	for(int i=0;i<32;i++)
 	{
 		R[i]=X2[PboxMatrix[i]-1];
@@ -278,6 +287,7 @@ void pBox(int round)
 }
 void f(int round,int decrypt)
 {
+	//total f function
 	
 	expand(round);
 	xor(round,decrypt); 
@@ -288,7 +298,7 @@ void f(int round,int decrypt)
 }
 void doRounds(int round,int decrypt)
 {
-	
+	//each round function 
 	f(round,decrypt);
 	for(int i=0;i<32;i++)
 	{
@@ -300,21 +310,20 @@ void doRounds(int round,int decrypt)
 }
 void FinalPermute(int binary[],int binaryout[],int i)
 {
+	//final permutation 
 	int j;
 	for(j=0;j<64;j++)
 	{
-		binaryout[i+j]=Encrypted[FPMatrix[j]-1];
-		//printf("I am at FinalPermute : %d    %d   times \n",Encrypted[j],j);		
+		binaryout[i+j]=Encrypted[FPMatrix[j]-1];		
 	}
 }
 void  Encrypt(int binary[],int binaryout[],int sizewithpadd)
 {
 	int i=0,j=0,k=0;
+	//devided into block of 64 bits
 	for(i=0;i<sizewithpadd*8;i=i+64)
 	{
 		InitialPermute(binary,i);
-				
-
 		for(j=0;j<64;j++)
 		{
 			if(j<32)
@@ -329,9 +338,8 @@ void  Encrypt(int binary[],int binaryout[],int sizewithpadd)
 		}
 		for(k=1;k<=16;k++)
 		{
-			
-			doRounds(k,0);
-			
+			//looping each round
+			doRounds(k,0);			
 		}
 		for(j=0;j<64;j++)
 		{
@@ -354,7 +362,7 @@ void  Encrypt(int binary[],int binaryout[],int sizewithpadd)
 }
 void  Decrypt(int binary[],int binaryout[],int sizewithpadd)
 {
-	
+	//same as encrypt just decrypt flag is set so key is used in reversed Orders
 	int i=0,j=0,k=0;
 	for(i=0;i<sizewithpadd*8;i=i+64)
 	{
@@ -438,6 +446,7 @@ void permuteCombine2(int RL[],int j )
 
 void keySchedule(int key64[])
 {
+	//Key scheduling Algo generates 16 round key form one 64bit round key
 	int Key56[56];
 	int i,j;
 	int RL[16][56];
@@ -458,7 +467,7 @@ void keySchedule(int key64[])
 
 		}		
 	}
-
+//left shifting of both L and R parts
 	left_shift(L);
 	left_shift(R);
 	for(j=0;j<16;j++)
@@ -539,7 +548,7 @@ void main()
 	int binaryout[sizewithpadd*8];
 	int key64[sizewithpadd2*8];
 	plaintextToBinary(keystring,key64,sizewithpadd2); //Key string converted to binary 64 bit	
-	keySchedule(key64);
+	keySchedule(key64);									//Key  scheduling 
 	if(mode == 1)
 	{
 		plaintextToBinary(plaintext,binary,size);    //plain text converted to binary
@@ -550,20 +559,20 @@ void main()
 		printf("Encrypted Binary :");
 		printArray(binaryout,sizewithpadd*8);					//Printing The Encrypted bin array
 		printf("Encrypted Text :");
-		printArray2(outstring,sizewithpadd);
+		printArray2(outstring,sizewithpadd);					//prints Encrypted Text
 	}
 	else
 	{
 		printf("Encrypted Text :");
-		printArray2(encryptedtext,sizewithpadd);
+		printArray2(encryptedtext,sizewithpadd);			//Encrypted text printing
 		plaintextToBinary(encryptedtext,binary,size);    //encrypted text converted to binary
 		printf("Encrypted Binary :");
 		printArray(binary,sizewithpadd*8);		//Printing Encrypted binary array
-		 Decrypt(binary,binaryout,(sizewithpadd));
+		 Decrypt(binary,binaryout,(sizewithpadd)); //Decrypt Function calling
 		printf("Decrypted Binary :");
-		printArray(binaryout,sizewithpadd*8);
+		printArray(binaryout,sizewithpadd*8);	//printing Decrypted Binary
 		binaryToText(binaryout,outstring,(sizewithpadd));
-		printArray2(outstring,(sizewithpadd));
+		printArray2(outstring,(sizewithpadd)); //Decrypted text = Plain Text
 	
 	
 	}
