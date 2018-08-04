@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<string.h>
+#include<stdlib.h>
 
 const int IPMatrix[64] = {
 	    58, 50, 42, 34, 26, 18, 10,  2,
@@ -124,27 +125,36 @@ const int PboxMatrix[32] = {
 int IPtext[64],ExpText[48],XorText[48],X2[32],R[32],Encrypted[64];
 int LEFT[17][32],RIGHT[17][32];
 int Key48[16][48];
-int e=0;
-
-
-
-void plaintextToBinary(char plaintext[],int *binary,int size)
+int mode;
+void plaintextToBinary(char plaintext[],int binary[],int size)
 {
 	int i,j=0,k=0;
-	char ch;
-	int padd ;
-	padd= (8- size%8);
+	int ch;
+	int padd =0;
+	if((size%8)!=0)
+	{
+		padd= (8 - size%8);
+	}
 	for(i=0;i<size;i++)
 	{
-		j=0;
-		ch = plaintext[i];
+		ch = (int) plaintext[i];
+		int  temp=-1;
+		int mask = 128;
 		for(k=0;k<8;k++)
 		{
 			
-			*(((binary+7)-j)+i*8)=ch%2;
-			ch = ch/2;
-			j++;
-			
+			temp = ch & mask;
+			if(temp==0)
+			{
+				binary[k+(8*i)]=0;	
+				
+			}
+			else 
+			{
+				binary[k+(8*i)]=1;
+			}
+			mask = mask >> 1;
+				
 		}
 	}
 	for(i=0;i<padd;i++)
@@ -153,21 +163,18 @@ void plaintextToBinary(char plaintext[],int *binary,int size)
 		j=0;
 		for(k=0;k<8;k++)
 		{
-			
-			*(((binary+7)-j)+(size+i)*8)=0;
-			j++;
-			
+			binary[(7-k)+(size+i)*8]=0;			
 		}
 	}
 }
-void binaryToText(int binary[],int Outstring[],int size)
+void binaryToText(int binary[],char Outstring[],int size)
 {
 	int ch=0;
 	for(int i=0;i<size;i++)
 	{
 		for(int j=0;j<8;j++)
 		{
-			ch = ch*10;
+			ch = ch*2;
 			ch = ch + binary[i*8+j];
 		}
 		Outstring[i]=ch;
@@ -179,7 +186,15 @@ void printArray(int array[],int size)
 {
 	for(int i=0;i<size;i++)
 	{
-		printf("%c ",array[i]);
+		printf("%d",array[i]);
+	}
+	printf("\n");
+}
+void printArray2(char array[],int size)
+{
+	for(int i=0;i<size;i++)
+	{
+		printf("%c",array[i]);
 	}
 	printf("\n");
 }
@@ -203,12 +218,22 @@ void expand(int round)
 		
 	}
 }
-void xor(int round )
+void xor(int round,int decrypt )
 {
 	int i;
 	for(i=0;i<48;i++)
 	{
-		XorText[i]=ExpText[i]^Key48[round-1][i];
+		switch(decrypt)
+		{
+			case 0:{
+				XorText[i]=ExpText[i]^Key48[round-1][i];break;}
+
+			case 1:{
+				XorText[i]=ExpText[i]^Key48[16-round][i];break;}
+
+			default:break;
+		}
+		
 	}
 }
 void sBox(int round)
@@ -251,20 +276,20 @@ void pBox(int round)
 	}
 	
 }
-void f(int round)
+void f(int round,int decrypt)
 {
 	
 	expand(round);
-	xor(round); 
+	xor(round,decrypt); 
 	sBox(round);
 	pBox(round);
 	
 	
 }
-void doRounds(int round)
+void doRounds(int round,int decrypt)
 {
 	
-	f(round);
+	f(round,decrypt);
 	for(int i=0;i<32;i++)
 	{
 		RIGHT[round][i]=R[i]^LEFT[round-1][i];
@@ -305,7 +330,53 @@ void  Encrypt(int binary[],int binaryout[],int sizewithpadd)
 		for(k=1;k<=16;k++)
 		{
 			
-			doRounds(k);
+			doRounds(k,0);
+			
+		}
+		for(j=0;j<64;j++)
+		{
+			if(j<32)
+			{
+				Encrypted[j]=RIGHT[16][j];
+			}
+			else
+			{
+				Encrypted[j]=LEFT[16][j-32];
+			}
+			
+			
+		}
+		
+		FinalPermute(binary,binaryout,i);
+		
+		
+	}
+}
+void  Decrypt(int binary[],int binaryout[],int sizewithpadd)
+{
+	
+	int i=0,j=0,k=0;
+	for(i=0;i<sizewithpadd*8;i=i+64)
+	{
+		InitialPermute(binary,i);
+				
+
+		for(j=0;j<64;j++)
+		{
+			if(j<32)
+			{
+				LEFT[0][j]=IPtext[j];
+			}
+			else
+			{
+				RIGHT[0][j-32]=IPtext[j];
+			}
+			
+		}
+		for(k=1;k<=16;k++)
+		{
+			
+			doRounds(k,1);
 			
 		}
 		for(j=0;j<64;j++)
@@ -404,37 +475,99 @@ void keySchedule(int key64[])
 			}
 
 		}	
-		permuteCombine2(RL[j],j);
+		
 	}
-		
-		
+	for(j=0;j<16;j++)
+	{
+		permuteCombine2(RL[j],j);
+	}		
 }
 
 void main()
 {
-	char plaintext[30],keystring[9],keystring2[9];
-	printf("Please Enter The Plaintext in text Not more than 30 charecter\n");
-	gets(plaintext);
+	char plaintext[30],encryptedtext[240],keystring[9],keystring2[9];
+	int size,size2;
+	printf("Please Enter 1 for Encryption mode 2 for Decryption Mode\n");
+	scanf(" %d",&mode);
+	getchar();
+	switch(mode)
+	{
+		case 1:{
+			printf("Please Enter The Plaintext in text Not more than 30 charecter\n");
+			gets(plaintext);
+			size = strlen(plaintext);	
+			break;
+
+		}
+		case 2:{
+			printf("Please Enter The Encrypted text Not more than 30 bits\n");
+			gets(encryptedtext);
+			size = strlen(encryptedtext);
+			break;
+
+		}
+		default:{
+			printf("There is Only Two Mode 1 and 2");exit(1);
+		}
+
+	}
+
 	printf("Please Enter 64 bit Key(8 charecter Exactly)\n");
 	gets(keystring);
-	//strncpy (str2,keystring,8);
-	int size,size2;
 	size2 = strlen(keystring);
-	size = strlen(plaintext);
-	int sizewithpadd = size + (8-(size%8));
-	int sizewithpadd2 = size2 + (8-(size2%8));
-	int outstring[sizewithpadd];
-	//printf("%d\n",size2);
+	int sizewithpadd;
+	int sizewithpadd2;
+	if((size%8)!=0)
+	{
+		 sizewithpadd = size + (8-(size%8));
+	}
+	else
+	{
+		sizewithpadd = size ;
+	}
+	if((size2%8)!=0)
+	{
+		 sizewithpadd2 = size2 + (8-(size2%8));
+	}
+	else
+	{
+		 sizewithpadd2 = size2 ;
+	}
+	
+	char outstring[sizewithpadd];
 	int binary[sizewithpadd*8];
 	int binaryout[sizewithpadd*8];
 	int key64[sizewithpadd2*8];
-	plaintextToBinary(plaintext,binary,size);
-	//printArray(binary,sizewithpadd*8);
-	plaintextToBinary(keystring,key64,sizewithpadd2);	
+	plaintextToBinary(keystring,key64,sizewithpadd2); //Key string converted to binary 64 bit	
 	keySchedule(key64);
-	Encrypt(binary,binaryout,sizewithpadd);
-	binaryToText(binaryout,outstring,sizewithpadd);
-	printArray(outstring,sizewithpadd);
+	if(mode == 1)
+	{
+		plaintextToBinary(plaintext,binary,size);    //plain text converted to binary
+		printf("Plain text Binary :");
+		printArray(binary,sizewithpadd*8);		//Printing plaintext binary array
+		Encrypt(binary,binaryout,sizewithpadd);		//Encrytion Process
+		binaryToText(binaryout,outstring,sizewithpadd);    //Encrypted Bin to Char array
+		printf("Encrypted Binary :");
+		printArray(binaryout,sizewithpadd*8);					//Printing The Encrypted bin array
+		printf("Encrypted Text :");
+		printArray2(outstring,sizewithpadd);
+	}
+	else
+	{
+		printf("Encrypted Text :");
+		printArray2(encryptedtext,sizewithpadd);
+		plaintextToBinary(encryptedtext,binary,size);    //encrypted text converted to binary
+		printf("Encrypted Binary :");
+		printArray(binary,sizewithpadd*8);		//Printing Encrypted binary array
+		 Decrypt(binary,binaryout,(sizewithpadd));
+		printf("Decrypted Binary :");
+		printArray(binaryout,sizewithpadd*8);
+		binaryToText(binaryout,outstring,(sizewithpadd));
+		printArray2(outstring,(sizewithpadd));
+	
+	
+	}
+	
 
 }
 
