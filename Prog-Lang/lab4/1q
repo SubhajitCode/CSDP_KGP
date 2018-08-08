@@ -1,0 +1,17 @@
+#include<stdio.h>
+int main()
+{
+	int n,result=2,i;
+	printf("Please enter a number n\n");
+	scanf("%d",&n);
+	for(i=0;i<=n;i++)
+	{
+		result=result*2;
+		printf("%d ",result);
+				
+				
+	}
+	printf("\n");
+
+return 0;
+}
