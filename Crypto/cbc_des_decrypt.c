@@ -5,8 +5,16 @@
 #include <string.h>
 #include "des.h"
 #include "bmp.h"
-BMPImage *Encryptimage(BMPImage *image);
-BMPImage *Encryptimage(BMPImage *image)
+BMPImage *Decryptimage(BMPImage *image);
+void xor_cbc(int input1[],int input2[],int output[] );
+void xor_cbc(int input1[],int input2[],int output[] )
+{
+    for(int i=0;i<64;i++)
+    {
+        output[i]=input1[i]^input2[i];
+    }
+}
+BMPImage *Decryptimage(BMPImage *image)
 {
     BMPImage *encrypted_image=malloc(sizeof(*image));
     encrypted_image->header = image->header;
@@ -16,25 +24,43 @@ BMPImage *Encryptimage(BMPImage *image)
     encrypted_image->header.size = BMP_HEADER_SIZE + encrypted_image->header.image_size_bytes;
     // Allocate memory for image data
     encrypted_image->data = malloc(sizeof(*encrypted_image->data) * encrypted_image->header.image_size_bytes);
-    int binary[64],binaryout[64];
+    int binary[64],binaryout[64],binary2[64],binary3[64],iv[64],i,j;
     int size =image-> header.image_size_bytes;
-   // printf("Size =  %d ",size);
-    
-    for(int i = 0; i < size; i=i+8)
+    //printf("Size =  %d ",size);
+    for(i=0;i<64;i++)
     {
+        iv[i]=(i%2);
+    }
+    
+    for( i = 0; i < size; i=i+8)
+    {
+        for(j=0;j<64;j++)
+        {
+            binary3[j]=binary[j];
+        }
         plaintextToBinary((image->data+i),binary,8);
        // printf("Original image Data :  ");
-       // printArray(binary,64);
-        Encrypt(binary,binaryout,8);
+        //printArray(binary,64);
+        Decrypt(binary,binaryout,8);
         //printf("Encrypted image Data : ");
-       // printArray(binaryout,64);
-        binaryToText(binaryout,(encrypted_image->data+i),8);
+        //printArray(binaryout,64);
+        if(i==0)
+        {
+            xor_cbc(binaryout,iv,binary2);
+        }
+        else
+        {
+            xor_cbc(binaryout,binary3,binary2);
+
+        }
+        binaryToText(binary2,(encrypted_image->data+i),8);
     }
     return encrypted_image;
 
 }
 int main(void)
-{  
+{
+    
 	char keystring[9];
 	int size2;
 	printf("Please Enter 64 bit Key(8 charecter Exactly)\n");
@@ -53,12 +79,11 @@ int main(void)
 	plaintextToBinary(keystring,key64,sizewithpadd2); //Key string converted to binary 64 bit	
 	keySchedule(key64);									//Key  scheduling 
     char *error = NULL;
-    BMPImage *image = read_image("Tux.bmp", &error);
-    BMPImage *encrypted_image=Encryptimage(image);
-    write_image("ecb_Encrypted_tux.bmp", encrypted_image, &error);
-    _clean_up(NULL, image, &error);
+    BMPImage *encrypted_image = read_image("cbc_Encrypted_Tux.bmp", &error);
+    BMPImage *decrypted_image=Decryptimage(encrypted_image);
+    write_image("cbc_Decrypted_Tux.bmp", decrypted_image, &error);
+    _clean_up(NULL, decrypted_image, &error);
     _clean_up(NULL, encrypted_image, &error);
-
-  printf("--------------------------Encryption Done---------------------------\n");
+      printf("--------------------------Decryption Done---------------------------\n");
     return EXIT_SUCCESS;
 }

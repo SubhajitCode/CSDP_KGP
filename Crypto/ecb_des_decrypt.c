@@ -5,8 +5,8 @@
 #include <string.h>
 #include "des.h"
 #include "bmp.h"
-BMPImage *Encryptimage(BMPImage *image);
-BMPImage *Encryptimage(BMPImage *image)
+BMPImage *Decryptimage(BMPImage *image);
+BMPImage *Decryptimage(BMPImage *image)
 {
     BMPImage *encrypted_image=malloc(sizeof(*image));
     encrypted_image->header = image->header;
@@ -17,24 +17,23 @@ BMPImage *Encryptimage(BMPImage *image)
     // Allocate memory for image data
     encrypted_image->data = malloc(sizeof(*encrypted_image->data) * encrypted_image->header.image_size_bytes);
     int binary[64],binaryout[64];
-    int size =image-> header.image_size_bytes;
-   // printf("Size =  %d ",size);
-    
+    int size =image-> header.image_size_bytes;    
     for(int i = 0; i < size; i=i+8)
     {
         plaintextToBinary((image->data+i),binary,8);
        // printf("Original image Data :  ");
-       // printArray(binary,64);
-        Encrypt(binary,binaryout,8);
+        //printArray(binary,64);
+        Decrypt(binary,binaryout,8);
         //printf("Encrypted image Data : ");
-       // printArray(binaryout,64);
+        //printArray(binaryout,64);
         binaryToText(binaryout,(encrypted_image->data+i),8);
     }
     return encrypted_image;
 
 }
 int main(void)
-{  
+{
+    
 	char keystring[9];
 	int size2;
 	printf("Please Enter 64 bit Key(8 charecter Exactly)\n");
@@ -53,12 +52,11 @@ int main(void)
 	plaintextToBinary(keystring,key64,sizewithpadd2); //Key string converted to binary 64 bit	
 	keySchedule(key64);									//Key  scheduling 
     char *error = NULL;
-    BMPImage *image = read_image("Tux.bmp", &error);
-    BMPImage *encrypted_image=Encryptimage(image);
-    write_image("ecb_Encrypted_tux.bmp", encrypted_image, &error);
+    BMPImage *image = read_image("ecb_Encrypted_Tux.bmp", &error);
+    BMPImage *decrypted_image=Decryptimage(image);
+    write_image("ecb_Decrypted_Tux.bmp", decrypted_image, &error);
     _clean_up(NULL, image, &error);
-    _clean_up(NULL, encrypted_image, &error);
-
-  printf("--------------------------Encryption Done---------------------------\n");
+    _clean_up(NULL, decrypted_image, &error);
+    printf("--------------------------Decryption Done---------------------------\n");
     return EXIT_SUCCESS;
 }
