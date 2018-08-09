@@ -1,3 +1,11 @@
+/*
+Name:-Subhajit Barh
+Dept - Mathematics
+Discipline :- computer science And Dataprocessing
+Roll- 18MA60R33
+*/
+
+
 #include<stdio.h>
 #include<stdlib.h>
 #include <stdbool.h>
