@@ -1,5 +1,14 @@
-#include <stdio.h>
-int Sbox[256] =
+/*
+Name:-Subhajit Barh
+Dept - Mathematics
+Discipline :- computer science And Dataprocessing
+Roll- 18MA60R33
+*/
+
+
+
+int Nr=10;
+unsigned char Sbox[256] =
     {
         0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
         0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -17,7 +26,7 @@ int Sbox[256] =
         0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e, 0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e,
         0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf,
         0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16};
-int inversesbox[256] =
+unsigned char inversesbox[256] =
     {
         0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
         0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb,
@@ -54,19 +63,127 @@ unsigned char Rcon[256] =
         0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd,
         0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d};
 
+void aes_Encrypt(unsigned char plaintext[], unsigned char *RoundKey,int round);
+void aes_Decrypt(unsigned char plaintext[], unsigned char *RoundKey,int round);
+void SubByte(unsigned char state[][4]);
+void InverseSubByte(unsigned char state[][4]);
+void ShiftRow(unsigned char state[][4]);
+void InverseShiftRow(unsigned char state[][4]);
+void MixColumn(unsigned char state[][4]);
+void InverseMixColumn(unsigned char state[][4]);
+void AddRoundKey(int round, unsigned char state[][4], unsigned char *RoundKey);
+void KeyExpansion(unsigned char *key, unsigned char *in);
 
-void aes_Encrypt();
-void aes_Decrypt();
-void SubByte(int Instate[4][4], int OutState[4][4]);
-void InverseSubByte(int Instate[4][4], int OutState[4][4]);
-void ShiftRow(int state[4][4]);
-void InverseShiftRow(int state[4][4]);
-void MixColumn();
-void InverseMixColumn();
-void AddRoundKey(int i,int state[4][4],unsigned char RoundKey);
-void KeyExpansion(unsigned char *in);
 
+void debug(unsigned char state[][4])
+{
+        int  i,j,   k=0;
+        printf("\n");
+        for (i = 0; i < 4; i++)
+        {
+            for (j = 0; j < 4; j++)
+            {
+               printf("%02x  ",state[i][j]);
+                k++;
+            }
+            printf("\n");
+        }
+        printf("\n");
+}
+unsigned char GaloisMultiplication(unsigned char a, unsigned char b)
+{
+    printf(" %02x * %02x = ",a,b);
+    unsigned char result = 0;
+    int i,j=0;
+    while (a && b)
+    {
+        if (b & 1) //if bis odd
+        {
+            result = result ^ a;
+        }
+        if (a & 128)
+        {
+            a = (a << 1) ^ 0x1B;
+        }
+        else
+        {
+            a = (a << 1);
+           
+        }
+         b = (b >> 1);
+    }
+    printf("%02x \t",result);
+    return result;
+}
+void MixColumn(unsigned char state[][4])
+{
+    int i, j, k;
+   debug(state);
+    unsigned char temp[4][4] = {{0}};
+    int m[4][4] = {
+        {0x02, 0x03, 0x01, 0x01},
+        {0x01, 0x02, 0x03, 0x01},
+        {0x01, 0x01, 0x02, 0x03},
+        {0x03, 0x01, 0x01, 0x02}};
+    for (i = 0; i < 4; i++)
+    {
+        for (j = 0; j < 4; j++)
+        {
+            unsigned char temp2=0;
+            //printf("state[%d][%d] = ",j,i);
 
+            for (k = 0; k < 4; k++)
+            {
+                temp2 = temp2 ^ GaloisMultiplication(m[j][k],state[k][i]);
+            }
+            
+            temp[j][i]=temp2;
+            printf("\n");
+        }
+    }
+    for (i = 0; i < 4; i++)
+    {
+        for (j = 0; j < 4; j++)
+        {
+            state[i][j] = temp[i][j];
+        }
+    }
+   debug(state);
+}
+void InverseMixColumn(unsigned char state[][4])
+{
+    debug(state);
+    int i, j, k;
+    unsigned char temp[4][4] = {{0}};
+    int m[4][4] = {
+        {0x0e, 0x0b, 0x0d, 0x09},
+        {0x09, 0x0e, 0x0b, 0x0d},
+        {0x0d, 0x09, 0x0e, 0x0b},
+        {0x0b, 0x0d, 0x09, 0x0e}};
+    for (i = 0; i < 4; i++)
+    {
+        for (j = 0; j < 4; j++)
+        {
+            unsigned char temp2=0;
+            //printf("state[%d][%d] = ",j,i);
+
+            for (k = 0; k < 4; k++)
+            {
+                temp2 = temp2 ^ GaloisMultiplication(m[i][k],state[k][j]);
+            }
+            temp[i][j]=temp2;
+            printf("\n");
+        }
+    }
+    for (i = 0; i < 4; i++)
+    {
+        for (j = 0; j < 4; j++)
+        {
+            state[i][j] = temp[i][j];
+        }
+    }
+   debug(state);
+}
 
 void RotWord(unsigned char *in)
 {
@@ -92,96 +209,201 @@ void Keyschedule_core(unsigned char *in, unsigned char i)
     SubWord(in);
     in[0] ^= Rcon[i];
 }
-void AddRoundKey(int round,int state[4][4],unsigned char *RoundKey)
+void KeyExpansion(unsigned char *key, unsigned char *RoundKey)
 {
-    int i,j,k;
-    for(i=0;i<4;i++)
+    int j;
+    for (j = 0; j < 16; j++)
     {
-        for(j=0;j<4;j++)
-        {
-            state[i][j]=state[i][j] ^ RoundKey[round*16+(i*4)+j];
-        }
+        RoundKey[j] = key[j];
     }
-}
-void KeyExpansion(unsigned char *in)
-{
-    unsigned char t[4];
+    unsigned char temp[4];
     /* c is 16 because the first sub-key is the user-supplied key */
-    unsigned char c = 16;
-    unsigned char i = 1;
+    unsigned int BypteGenarated = 16;
+    unsigned int RconCount = 1;
     unsigned char a;
     /* We need 11 sets of sixteen bytes each for 128-bit mode */
-    while (c < 176)
+    while (BypteGenarated < 176)
     {
         /* Copy the temporary variable over from the last 4-byte         * block */
         for (a = 0; a < 4; a++)
-            t[a] = in[a + c - 4];
+            temp[a] = RoundKey[a + BypteGenarated - 4];
         /* Every four blocks (of four bytes), 
                  * do a complex calculation */
-        if (c % 16 == 0)
+        if (BypteGenarated % 16 == 0)
         {
-            Keyschedule_core(t, i);
-            i++;
+            Keyschedule_core(temp, RconCount);
+            RconCount++;
         }
         for (a = 0; a < 4; a++)
         {
-            in[c] = in[c - 16] ^ t[a];
-            c++;
+            RoundKey[BypteGenarated] = RoundKey[BypteGenarated - 16] ^ temp[a];
+            BypteGenarated++;
         }
     }
+    printf("Byte Generated = %d\n",BypteGenarated);
 }
-void SubByte(int Instate[4][4], int OutState[4][4])
+void AddRoundKey(int round, unsigned char state[][4], unsigned char *RoundKey)
 {
-    int i, j, temp;
+    //debug(state);
+    int i, j, k;
     for (i = 0; i < 4; i++)
     {
         for (j = 0; j < 4; j++)
         {
-            OutState[i][j] = Sbox[Instate[i][j]];
+            state[i][j] = state[i][j] ^ RoundKey[round * 16 + (i * 4) + j];
         }
     }
+    //debug(state);
 }
-void InverseSubByte(int Instate[4][4], int OutState[4][4])
+void SubByte(unsigned char state[][4])
 {
+    //debug(state);
     int i, j, temp;
+    unsigned char state2[4][4];
     for (i = 0; i < 4; i++)
     {
         for (j = 0; j < 4; j++)
         {
-            OutState[i][j] = inversesbox[Instate[i][j]];
+            state2[i][j] = state[i][j];
+        }
+    }
+
+    for (i = 0; i < 4; i++)
+    {
+        for (j = 0; j < 4; j++)
+        {
+            state[i][j] = Sbox[state2[i][j]];
+        }
+    }
+    //debug(state);
+}
+void InverseSubByte(unsigned char state[][4])
+{
+    int i, j, temp;
+    unsigned char state2[4][4];
+    for (i = 0; i < 4; i++)
+    {
+        for (j = 0; j < 4; j++)
+        {
+            state2[i][j] = state[i][j];
+        }
+    }
+    for (i = 0; i < 4; i++)
+    {
+        for (j = 0; j < 4; j++)
+        {
+            state[i][j] = inversesbox[state2[i][j]];
         }
     }
 }
-void ShiftRow(int state[4][4])
+void ShiftRow(unsigned char state[][4])
 {
-    int i, j, k, temp;
+    //debug(state);
+    int i, j, k;
+    unsigned char temp;
     for (i = 0; i < 4; i++)
     {
         for (j = 0; j < i; j++)
         {
-            temp = state[i - 1][0];
+            temp = state[i][0];
             for (k = 0; k < 3; k++)
             {
-                state[i - 1][k] = state[i - 1][k + 1];
+                state[i][k] = state[i][k + 1];
             }
-            state[i - 1][3] = temp;
+            state[i][3] = temp;
         }
     }
+    //debug(state);
 }
-void InverseShiftRow(int state[4][4])
+void InverseShiftRow(unsigned char state[][4])
 {
-    int i, j, k, temp;
+    int i, j, k;
+    unsigned char temp;
     for (i = 0; i < 4; i++)
     {
         for (j = 0; j < i; j++)
         {
-            temp = state[i - 1][3];
+            temp = state[i][3];
             for (k = 3; k > 0; k--)
             {
-                state[i - 1][k] = state[i - 1][k - 1];
+                state[i][k] = state[i][k - 1];
             }
-            state[i - 1][0] = temp;
+            state[i][0] = temp;
         }
     }
 }
+void aes_Encrypt(unsigned char plaintext[], unsigned char *RoundKey,int No_of_round)
+{
+    Nr=No_of_round;
+    unsigned char state[4][4];
+    int round = 0, i, j, k = 0;
+    for (i = 0; i < 4; i++)
+    {
+        for (j = 0; j < 4; j++)
+        {
+            state[i][j] = plaintext[k];
+            k++;
+        }
+    }
+    AddRoundKey(0, state, RoundKey);   
+    for (round = 1; round < Nr; ++round)
+    {
+        //debug(state);
+        SubByte(state);
+        //debug(state);
+        ShiftRow(state);
+        //debug(state);
+        //MixColumn(state);
+        AddRoundKey(round, state, RoundKey);
 
+    }
+
+    SubByte(state);
+    ShiftRow(state);
+    AddRoundKey(Nr, state, RoundKey);
+    k = 0;
+    for (i = 0; i < 4; i++)
+    {
+        for (j = 0; j < 4; j++)
+        {
+            plaintext[k] = state[i][j];
+            k++;
+        }
+    }
+}
+void aes_Decrypt(unsigned char plaintext[], unsigned char *RoundKey,int No_of_round)
+{
+    unsigned char state[4][4];
+    Nr=No_of_round;
+    int round = 0, i, j, k = 0;
+    for (i = 0; i < 4; i++)
+    {
+        for (j = 0; j < 4; j++)
+        {
+            state[i][j] = plaintext[k];
+            k++;
+        }
+    }
+
+    AddRoundKey(Nr, state, RoundKey);
+
+    for (round = (Nr - 1); round > 0; --round)
+    {
+        InverseShiftRow(state);
+        InverseSubByte(state);
+        AddRoundKey(round, state, RoundKey);
+        //InverseMixColumn(state);
+    }
+    InverseShiftRow(state);
+    InverseSubByte(state);
+    AddRoundKey(0, state, RoundKey);
+    k = 0;
+    for (i = 0; i < 4; i++)
+    {
+        for (j = 0; j < 4; j++)
+        {
+            plaintext[k] = state[i][j];
+            k++;
+        }
+    }
+}
