@@ -353,7 +353,7 @@ void aes_Encrypt(unsigned char plaintext[], unsigned char *RoundKey,int No_of_ro
         //debug(state);
         ShiftRow(state);
         //debug(state);
-        //MixColumn(state);
+        MixColumn(state);
         AddRoundKey(round, state, RoundKey);
 
     }
@@ -392,7 +392,7 @@ void aes_Decrypt(unsigned char plaintext[], unsigned char *RoundKey,int No_of_ro
         InverseShiftRow(state);
         InverseSubByte(state);
         AddRoundKey(round, state, RoundKey);
-        //InverseMixColumn(state);
+        InverseMixColumn(state);
     }
     InverseShiftRow(state);
     InverseSubByte(state);
